@@ -14,6 +14,9 @@ foreign import data REDUX :: Effect
 -- | A redux action is a record containing at least a "type" field
 type Action r = { type :: String | r }
 
+-- | The type of a redux reducer
+type Reducer s r = s -> Action r -> r
+
 -- | The type of redux's dispatch function
 type Dispatch r fx = Action r -> Eff (CoreEffects (redux :: REDUX | fx)) Unit
 
