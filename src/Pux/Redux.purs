@@ -15,7 +15,7 @@ foreign import data REDUX :: Effect
 type Action r = { type :: String | r }
 
 -- | The type of a redux reducer
-type Reducer s r = s -> Action r -> r
+type Reducer s r = s -> Action r -> s
 
 -- | The type of redux's dispatch function
 type Dispatch r fx = Action r -> Eff (CoreEffects (redux :: REDUX | fx)) Unit
