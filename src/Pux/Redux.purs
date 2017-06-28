@@ -3,8 +3,10 @@ module Pux.Redux where
 import Control.Monad.Eff (Eff, kind Effect)
 import Data.Symbol (class IsSymbol, SProxy(..))
 import Prelude (Unit, const, map, pure, unit, ($), (<<<))
-import Pux (CoreEffects, FoldP, noEffects)
+import Pux (CoreEffects, FoldP, Config, noEffects)
+import Pux.DOM.Events (DOMEvent)
 import Pux.DOM.HTML (HTML)
+import Signal (Signal)
 
 -- | Effect for actions that modify a redux store
 foreign import data REDUX :: Effect 
@@ -26,6 +28,28 @@ type AppState payload props fx = { dispatch :: Dispatch payload fx | props }
 data AppEvent pl fx ev
   = SetDispatch (Dispatch pl fx)
   | AppEvent ev
+
+type AppConfig props pl fx ev =
+  { initialState :: Record props
+  , view :: Record props -> HTML (AppEvent pl fx ev)
+  , foldp :: Dispatch pl fx -> FoldP (Record props) ev (redux :: REDUX | fx)
+  , inputs :: Array (Signal (AppEvent pl fx ev))
+  }
+
+fromAppConfig
+  :: forall pl fx ev props
+   . AppConfig props pl fx ev
+  -> Config
+      (DOMEvent -> AppEvent pl fx ev)
+      (AppEvent pl fx ev)
+      (AppState pl props fx)
+      (redux :: REDUX | fx)
+fromAppConfig { initialState, view, foldp, inputs } =
+  { initialState: mkInitialState initialState
+  , view: mkView view
+  , foldp: mkFoldp foldp
+  , inputs
+  }
 
 -- | Right-biased record merge
 foreign import merge
