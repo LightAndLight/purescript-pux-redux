@@ -38,7 +38,7 @@ type AppConfig props pl fx ev =
   , view :: Record props -> HTML (AppEvent pl fx ev)
   , foldp :: Dispatch pl fx -> FoldP (Record props) ev (redux :: REDUX | fx)
   , dispatch :: Signal (Dispatch pl fx)
-  , inputs :: Array (Signal (AppEvent pl fx ev))
+  , inputs :: Array (Signal ev)
   }
 
 fromAppConfig
@@ -53,7 +53,7 @@ fromAppConfig { initialState, view, foldp, dispatch, inputs } =
   { initialState: mkInitialState initialState
   , view: mkView view
   , foldp: mkFoldp foldp
-  , inputs: map SetDispatch dispatch : inputs
+  , inputs: map SetDispatch dispatch : map (map AppEvent) inputs
   }
 
 -- | Right-biased record merge
