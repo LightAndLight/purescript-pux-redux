@@ -1,6 +1,7 @@
 module Pux.Redux where
 
 import Control.Monad.Eff (Eff, kind Effect)
+import Data.Array ((:))
 import Data.Symbol (class IsSymbol, SProxy(..))
 import Prelude (Unit, const, map, pure, unit, ($), (<<<))
 import Pux (CoreEffects, FoldP, Config, noEffects)
@@ -36,6 +37,7 @@ type AppConfig props pl fx ev =
   { initialState :: Record props
   , view :: Record props -> HTML (AppEvent pl fx ev)
   , foldp :: Dispatch pl fx -> FoldP (Record props) ev (redux :: REDUX | fx)
+  , dispatch :: Signal (Dispatch pl fx)
   , inputs :: Array (Signal (AppEvent pl fx ev))
   }
 
@@ -47,11 +49,11 @@ fromAppConfig
       (AppEvent pl fx ev)
       (AppState pl props fx)
       (redux :: REDUX | fx)
-fromAppConfig { initialState, view, foldp, inputs } =
+fromAppConfig { initialState, view, foldp, dispatch, inputs } =
   { initialState: mkInitialState initialState
   , view: mkView view
   , foldp: mkFoldp foldp
-  , inputs
+  , inputs: map SetDispatch dispatch : inputs
   }
 
 -- | Right-biased record merge
