@@ -4,6 +4,7 @@ import Control.Monad.Eff (Eff, kind Effect)
 import Data.Symbol (class IsSymbol, SProxy(..))
 import Prelude (Unit, map, ($))
 import Pux (CoreEffects, FoldP, noEffects)
+import Pux.DOM.HTML (HTML)
 
 -- | Effect for actions that modify a redux store
 foreign import data REDUX :: Effect 
@@ -59,3 +60,9 @@ mkFoldp foldpf (AppEvent ev) st =
     { effects: map (map (map AppEvent)) effects
     , state: merge { dispatch: st.dispatch } state
     }
+
+mkView
+  :: forall props pl fx ev
+   . (Record props -> HTML (AppEvent pl fx ev))
+  -> AppState pl props fx -> HTML (AppEvent pl fx ev)
+mkView f st = f (removeField (SProxy :: SProxy "dispatch") st)
