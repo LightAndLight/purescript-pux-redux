@@ -16,9 +16,9 @@ type Dispatch r fx = Action r -> Eff (CoreEffects (redux :: REDUX | fx)) Unit
 
 -- | A record containing a dispatch function along with some other
 -- fields. This will be used for the state of the pux application
-type Props payload props fx = { dispatch :: Dispatch payload fx | props }
+type AppState payload props fx = { dispatch :: Dispatch payload fx | props }
 
-data Event pl fx ev
+data AppEvent pl fx ev
   = SetDispatch (Dispatch pl fx)
   | AppEvent ev
 
@@ -50,7 +50,7 @@ foreign import addField
 mkFoldp
   :: forall props ev fx pl
    . (Dispatch pl fx -> FoldP (Record props) ev (redux :: REDUX | fx))
-  -> FoldP (Props pl props fx) (Event pl fx ev) (redux :: REDUX | fx)
+  -> FoldP (AppState pl props fx) (AppEvent pl fx ev) (redux :: REDUX | fx)
 mkFoldp foldpf (SetDispatch f) st = noEffects $ st { dispatch = f } 
 mkFoldp foldpf (AppEvent ev) st =
   let
