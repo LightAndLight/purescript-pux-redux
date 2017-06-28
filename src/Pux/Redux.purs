@@ -2,7 +2,7 @@ module Pux.Redux where
 
 import Control.Monad.Eff (Eff, kind Effect)
 import Data.Symbol (class IsSymbol, SProxy(..))
-import Prelude (Unit, map, ($))
+import Prelude (Unit, const, map, pure, unit, ($), (<<<))
 import Pux (CoreEffects, FoldP, noEffects)
 import Pux.DOM.HTML (HTML)
 
@@ -14,6 +14,10 @@ type Action r = { type :: String | r }
 
 -- | The type of redux's dispatch function
 type Dispatch r fx = Action r -> Eff (CoreEffects (redux :: REDUX | fx)) Unit
+
+-- | A safe initial value for the dispatch function
+initialDispatch :: forall r fx. Dispatch r fx
+initialDispatch = const $ pure unit
 
 -- | A record containing a dispatch function along with some other
 -- fields. This will be used for the state of the pux application
@@ -48,6 +52,12 @@ foreign import addField
   -> Record r
   -> Record r'
 
+mkInitialState
+  :: forall props pl fx
+   . Record props
+  -> AppState pl props fx
+mkInitialState = addField (SProxy :: SProxy "dispatch") initialDispatch
+
 mkFoldp
   :: forall props ev fx pl
    . (Dispatch pl fx -> FoldP (Record props) ev (redux :: REDUX | fx))
@@ -65,4 +75,4 @@ mkView
   :: forall props pl fx ev
    . (Record props -> HTML (AppEvent pl fx ev))
   -> AppState pl props fx -> HTML (AppEvent pl fx ev)
-mkView f st = f (removeField (SProxy :: SProxy "dispatch") st)
+mkView f = f <<< removeField (SProxy :: SProxy "dispatch")
