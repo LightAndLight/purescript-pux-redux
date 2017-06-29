@@ -1,9 +1,20 @@
-module Pux.Redux where
+module Pux.Redux
+  ( Action
+  , Reducer
+  , Dispatch
+  , initialDispatch
+  , AppState
+  , AppEvent
+  , appEvent
+  , AppConfig
+  , fromAppConfig
+  ) where
+
+import Prelude 
 
 import Control.Monad.Eff (Eff, kind Effect)
 import Data.Array ((:))
 import Data.Symbol (class IsSymbol, SProxy(..))
-import Prelude (class Applicative, class Apply, class Bind, class Functor, Unit, const, map, pure, unit, ($), (<<<))
 import Pux (CoreEffects, FoldP, Config, noEffects)
 import Pux.DOM.Events (DOMEvent)
 import Pux.DOM.HTML (HTML)
@@ -13,7 +24,9 @@ import Text.Smolder.Markup (EventHandlers)
 -- | Effect for actions that modify a redux store
 foreign import data REDUX :: Effect 
 
--- | A redux action is a record containing at least a "type" field
+-- | The type of redux actions.
+--
+-- An action is a record containing at least a "type" field
 type Action r = { type :: String | r }
 
 -- | The type of a redux reducer
@@ -30,6 +43,7 @@ initialDispatch = const $ pure unit
 -- fields. This will be used for the state of the pux application
 type AppState payload props fx = { dispatch :: Dispatch payload fx | props }
 
+-- | The event type for apps that have access to a dispatch function
 data AppEvent pl fx ev
   = SetDispatch (Dispatch pl fx)
   | AppEvent ev
@@ -54,7 +68,7 @@ instance appEventBind :: Bind (AppEvent pl fx) where
 --
 -- Example:
 --
--- input ! type' "text" #! appEvent onChange (TextChangedEvent <<< targetValue)
+-- >>> input ! type' "text" #! appEvent onChange (SomeEvent <<< targetValue)
 appEvent
   :: (forall ev. (DOMEvent -> ev) -> EventHandlers (DOMEvent -> ev))
   -> forall event pl fx
@@ -62,6 +76,7 @@ appEvent
   -> EventHandlers (DOMEvent -> AppEvent pl fx event)
 appEvent handlerType handler = handlerType (AppEvent <<< handler)
 
+-- | The configuration of a pux app that can interact with a redux store.
 type AppConfig props pl fx ev =
   { initialState :: Record props
   , view :: Record props -> HTML (AppEvent pl fx ev)
@@ -70,6 +85,7 @@ type AppConfig props pl fx ev =
   , inputs :: Array (Signal ev)
   }
 
+-- | Convert an 'AppConfig' to a 'Config'
 fromAppConfig
   :: forall pl fx ev props
    . AppConfig props pl fx ev
@@ -85,7 +101,7 @@ fromAppConfig { initialState, view, foldp, dispatch, inputs } =
   , inputs: map SetDispatch dispatch : map (map AppEvent) inputs
   }
 
--- | Right-biased record merge
+-- | Left-biased record merge
 foreign import merge
   :: forall r1 r2 r3
    . Union r1 r2 r3
@@ -93,6 +109,7 @@ foreign import merge
   -> Record r2
   -> Record r3
 
+-- | Record field removal
 foreign import removeField
   :: forall l a r r'
    . IsSymbol l
@@ -101,6 +118,7 @@ foreign import removeField
   -> Record r'
   -> Record r
 
+-- | Record field addition
 foreign import addField
   :: forall l a r r'
    . IsSymbol l
