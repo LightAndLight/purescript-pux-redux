@@ -3,7 +3,7 @@ module Pux.Redux where
 import Control.Monad.Eff (Eff, kind Effect)
 import Data.Array ((:))
 import Data.Symbol (class IsSymbol, SProxy(..))
-import Prelude (Unit, const, map, pure, unit, ($), (<<<))
+import Prelude (class Applicative, class Apply, class Bind, class Functor, Unit, const, map, pure, unit, ($), (<<<))
 import Pux (CoreEffects, FoldP, Config, noEffects)
 import Pux.DOM.Events (DOMEvent)
 import Pux.DOM.HTML (HTML)
@@ -32,6 +32,22 @@ type AppState payload props fx = { dispatch :: Dispatch payload fx | props }
 data AppEvent pl fx ev
   = SetDispatch (Dispatch pl fx)
   | AppEvent ev
+
+instance appEventFunctor :: Functor (AppEvent pl fx) where
+  map f (AppEvent ev) = AppEvent (f ev)
+  map f (SetDispatch dis) = SetDispatch dis
+
+instance appEventApply :: Apply (AppEvent pl fx) where
+  apply (AppEvent f) (AppEvent a) = AppEvent (f a)
+  apply (SetDispatch dis) _ = SetDispatch dis
+  apply _ (SetDispatch dis) = SetDispatch dis
+
+instance appEventApplicative :: Applicative (AppEvent pl fx) where
+  pure = AppEvent
+
+instance appEventBind :: Bind (AppEvent pl fx) where
+  bind (AppEvent ev) f = f ev
+  bind (SetDispatch dis) f = SetDispatch dis
 
 type AppConfig props pl fx ev =
   { initialState :: Record props
