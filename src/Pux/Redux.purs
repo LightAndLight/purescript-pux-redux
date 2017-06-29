@@ -1,5 +1,6 @@
 module Pux.Redux
-  ( Action
+  ( REDUX
+  , Action
   , Reducer
   , Dispatch
   , initialDispatch
@@ -14,7 +15,8 @@ import Prelude
 
 import Control.Monad.Eff (Eff, kind Effect)
 import Data.Array ((:))
-import Data.Symbol (class IsSymbol, SProxy(..))
+import Data.Record (extend, restrict)
+import Data.Symbol (SProxy(..))
 import Pux (CoreEffects, FoldP, Config, noEffects)
 import Pux.DOM.Events (DOMEvent)
 import Pux.DOM.HTML (HTML)
@@ -101,38 +103,11 @@ fromAppConfig { initialState, view, foldp, dispatch, inputs } =
   , inputs: map SetDispatch dispatch : map (map AppEvent) inputs
   }
 
--- | Left-biased record merge
-foreign import merge
-  :: forall r1 r2 r3
-   . Union r1 r2 r3
-  => Record r1
-  -> Record r2
-  -> Record r3
-
--- | Record field removal
-foreign import removeField
-  :: forall l a r r'
-   . IsSymbol l
-  => RowCons l a r r'
-  => SProxy l
-  -> Record r'
-  -> Record r
-
--- | Record field addition
-foreign import addField
-  :: forall l a r r'
-   . IsSymbol l
-  => RowCons l a r r'
-  => SProxy l
-  -> a
-  -> Record r
-  -> Record r'
-
 mkInitialState
   :: forall props pl fx
    . Record props
   -> AppState pl props fx
-mkInitialState = addField (SProxy :: SProxy "dispatch") initialDispatch
+mkInitialState = extend (SProxy :: SProxy "dispatch") initialDispatch
 
 mkFoldp
   :: forall props ev fx pl
@@ -141,14 +116,14 @@ mkFoldp
 mkFoldp foldpf (SetDispatch f) st = noEffects $ st { dispatch = f } 
 mkFoldp foldpf (AppEvent ev) st =
   let
-    { effects, state } = foldpf st.dispatch ev (removeField (SProxy :: SProxy "dispatch") st)
+    { effects, state } = foldpf st.dispatch ev (restrict (SProxy :: SProxy "dispatch") st)
   in 
     { effects: map (map (map AppEvent)) effects
-    , state: merge { dispatch: st.dispatch } state
+    , state: extend (SProxy :: SProxy "dispatch") st.dispatch state
     }
 
 mkView
   :: forall props pl fx ev
    . (Record props -> HTML (AppEvent pl fx ev))
   -> AppState pl props fx -> HTML (AppEvent pl fx ev)
-mkView f = f <<< removeField (SProxy :: SProxy "dispatch")
+mkView f = f <<< restrict (SProxy :: SProxy "dispatch")
