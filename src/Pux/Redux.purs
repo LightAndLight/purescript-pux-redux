@@ -8,6 +8,7 @@ import Pux (CoreEffects, FoldP, Config, noEffects)
 import Pux.DOM.Events (DOMEvent)
 import Pux.DOM.HTML (HTML)
 import Signal (Signal)
+import Text.Smolder.Markup (EventHandlers)
 
 -- | Effect for actions that modify a redux store
 foreign import data REDUX :: Effect 
@@ -48,6 +49,18 @@ instance appEventApplicative :: Applicative (AppEvent pl fx) where
 instance appEventBind :: Bind (AppEvent pl fx) where
   bind (AppEvent ev) f = f ev
   bind (SetDispatch dis) f = SetDispatch dis
+
+-- | Lift an event source from supplying `event`s to supplying `AppEvent pl fx event`s
+--
+-- Example:
+--
+-- input ! type' "text" #! appEvent onChange (TextChangedEvent <<< targetValue)
+appEvent
+  :: (forall ev. (DOMEvent -> ev) -> EventHandlers (DOMEvent -> ev))
+  -> forall event pl fx
+   . (DOMEvent -> event)
+  -> EventHandlers (DOMEvent -> AppEvent pl fx event)
+appEvent handlerType handler = handlerType (AppEvent <<< handler)
 
 type AppConfig props pl fx ev =
   { initialState :: Record props
