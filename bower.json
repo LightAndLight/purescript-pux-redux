@@ -1,5 +1,9 @@
 {
   "name": "purescript-pux-redux",
+  "desription": "Types and helper functions for building pux apps that interact with an external redux store",
+  "authors": [
+    "Isaac Elliott <isaace71295@gmail.com>"
+  ],
   "ignore": [
     "**/.*",
     "node_modules",
