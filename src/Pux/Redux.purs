@@ -15,8 +15,7 @@ import Prelude
 
 import Control.Monad.Eff (Eff, kind Effect)
 import Data.Array ((:))
-import Data.Record (extend, restrict)
-import Data.Symbol (SProxy(..))
+import Data.Symbol (class IsSymbol, SProxy(..))
 import Pux (CoreEffects, FoldP, Config, noEffects)
 import Pux.DOM.Events (DOMEvent)
 import Pux.DOM.HTML (HTML)
@@ -103,11 +102,40 @@ fromAppConfig { initialState, view, foldp, dispatch, inputs } =
   , inputs: map SetDispatch dispatch : map (map AppEvent) inputs
   }
 
+-- | **Unsafe**
+-- 
+-- Record restriction
+--
+-- Because there is no `Lacks` constraint, the result of `restrict`
+-- could still contain the label that was deleted and therefore allow
+-- access to a field that doesn't exist.
+foreign import unsafeRestrict
+  :: forall label a tail result
+   . IsSymbol label
+  => RowCons label a tail result
+  => SProxy label
+  -> Record result
+  -> Record tail
+
+-- | **Unsafe**
+--
+-- Record extension
+--
+-- See `unsafeRestrict` for details
+foreign import unsafeExtend
+  :: forall label a tail result
+   . IsSymbol label
+  => RowCons label a tail result
+  => SProxy label
+  -> a
+  -> Record tail
+  -> Record result
+
 mkInitialState
   :: forall props pl fx
    . Record props
   -> AppState pl props fx
-mkInitialState = extend (SProxy :: SProxy "dispatch") initialDispatch
+mkInitialState = unsafeExtend (SProxy :: SProxy "dispatch") initialDispatch
 
 mkFoldp
   :: forall props ev fx pl
@@ -116,14 +144,14 @@ mkFoldp
 mkFoldp foldpf (SetDispatch f) st = noEffects $ st { dispatch = f } 
 mkFoldp foldpf (AppEvent ev) st =
   let
-    { effects, state } = foldpf st.dispatch ev (restrict (SProxy :: SProxy "dispatch") st)
+    { effects, state } = foldpf st.dispatch ev (unsafeRestrict (SProxy :: SProxy "dispatch") st)
   in 
     { effects: map (map (map AppEvent)) effects
-    , state: extend (SProxy :: SProxy "dispatch") st.dispatch state
+    , state: unsafeExtend (SProxy :: SProxy "dispatch") st.dispatch state
     }
 
 mkView
   :: forall props pl fx ev
    . (Record props -> HTML (AppEvent pl fx ev))
   -> AppState pl props fx -> HTML (AppEvent pl fx ev)
-mkView f = f <<< restrict (SProxy :: SProxy "dispatch")
+mkView f = f <<< unsafeRestrict (SProxy :: SProxy "dispatch")

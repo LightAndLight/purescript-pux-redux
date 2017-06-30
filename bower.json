@@ -17,8 +17,7 @@
     "purescript-pux": "^10.0.0",
     "purescript-symbols": "^3.0.0",
     "purescript-signal": "^9.0.0",
-    "purescript-arrays": "^4.1.2",
-    "purescript-records": "https://gitlab.com/lightandlight/purescript-records.git"
+    "purescript-arrays": "^4.1.2"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"
