@@ -42,7 +42,7 @@ pursuit:
   script:
     - echo "$GITHUB_TOKEN" | pulp login
     - git checkout $CI_COMMIT_REF_NAME
-    - yes | pulp publish --no-push
+    - echo "y" | pulp publish --no-push
     
 bower:
   stage: publish
