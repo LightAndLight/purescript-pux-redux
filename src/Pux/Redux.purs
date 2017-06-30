@@ -28,23 +28,62 @@ foreign import data REDUX :: Effect
 -- | The type of redux actions.
 --
 -- An action is a record containing at least a "type" field
+--
+-- ```purescript
+-- increment :: Int -> Action (value :: Int)
+-- increment value = { type: "INCREMENT", value }
+-- ```
 type Action r = { type :: String | r }
 
 -- | The type of a redux reducer
+--
+-- A reducer is a function that takes a state and an action, and returns a new
+-- state based on that action.
+--
+-- ```purescript
+-- reducer :: Reducer Int (value :: Int)
+-- reducer state action =
+--   case action.type of
+--     "INCREMENT" -> state + action.value
+--     _ -> state
+-- ```
 type Reducer s r = s -> Action r -> s
 
 -- | The type of redux's dispatch function
+--
+-- A dispatch function takes an action as an argument and returns an effectul
+-- computation that modifies the redux store, and has some other unknown effects.
+--
+-- ```purescript
+-- foldp
+--   :: forall fx ev st
+--    . Dispatch (value :: Int) fx
+--   -> FoldP st ev (redux :: REDUX | fx)
+-- foldp dispatch ev st =
+--   case ev of
+--     ... ->
+--       { state: ...
+--       , effects:
+--         [ ...
+--         , liftEff (dispatch $ increment 5) $> Nothing
+--         ]
+--       }
+-- ```
 type Dispatch r fx = Action r -> Eff (CoreEffects (redux :: REDUX | fx)) Unit
 
--- | A safe initial value for the dispatch function
+-- | A safe initial value for the dispatch function. This will normally be used
+-- from Javascript.
 initialDispatch :: forall r fx. Dispatch r fx
 initialDispatch = const $ pure unit
 
--- | A record containing a dispatch function along with some other
--- fields. This will be used for the state of the pux application
-type AppState payload props fx = { dispatch :: Dispatch payload fx | props }
+-- | The state type for apps that have access to a dispatch function.
+--
+-- You will never have to create a value of this type manually.
+type AppState payload st fx = { dispatch :: Dispatch payload fx | st }
 
 -- | The event type for apps that have access to a dispatch function
+--
+-- You will never have to create a value of this type manually.
 data AppEvent pl fx ev
   = SetDispatch (Dispatch pl fx)
   | AppEvent ev
@@ -67,9 +106,12 @@ instance appEventBind :: Bind (AppEvent pl fx) where
 
 -- | Lift an event source from supplying `event`s to supplying `AppEvent pl fx event`s
 --
--- Example:
---
--- >>> input ! type' "text" #! appEvent onChange (SomeEvent <<< targetValue)
+-- ```purescript
+-- textInput :: forall ev pl fx. (String -> ev) -> HTML (AppEvent pl fx ev)
+-- textInput event =
+--   ! type' "text"
+--   #! appEvent onChange (event <<< targetValue)
+-- ```
 appEvent
   :: (forall ev. (DOMEvent -> ev) -> EventHandlers (DOMEvent -> ev))
   -> forall event pl fx
@@ -78,6 +120,8 @@ appEvent
 appEvent handlerType handler = handlerType (AppEvent <<< handler)
 
 -- | The configuration of a pux app that can interact with a redux store.
+--
+-- Use 'fromAppConfig' to obtain a regular 'Config'
 type AppConfig props pl fx ev =
   { initialState :: Record props
   , view :: Record props -> HTML (AppEvent pl fx ev)
@@ -87,6 +131,18 @@ type AppConfig props pl fx ev =
   }
 
 -- | Convert an 'AppConfig' to a 'Config'
+--
+-- ```purescript
+-- main = do
+--   app <- start $ fromAppConfig
+--     { initialState
+--     , foldp
+--     , view
+--     , dispatch
+--     , inputs: []
+--     }
+--   ...
+-- ```
 fromAppConfig
   :: forall pl fx ev props
    . AppConfig props pl fx ev
