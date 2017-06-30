@@ -35,7 +35,7 @@ github:
     - git remote add github https://lightandlight:$GITHUB_TOKEN@github.com/lightandlight/$CI_PROJECT_NAME.git
     - git push github master --tags
     
-publish:
+pursuit:
   stage: publish
   only:
     - tags
@@ -43,3 +43,11 @@ publish:
     - echo "$GITHUB_TOKEN" | pulp login
     - git checkout $CI_COMMIT_REF_NAME
     - yes | pulp publish --no-push
+    
+bower:
+  stage: publish
+  only:
+    - tags
+  script:
+    - bower register $CI_PROJECT_NAME git://github.com/lightandlight/$CI_PROJECT_NAME.git
+    
