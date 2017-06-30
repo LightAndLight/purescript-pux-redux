@@ -1,0 +1,45 @@
+image: lightandlight/purescript:0.11.5
+
+stages:
+  - install
+  - build
+  - test
+  - github
+  - publish
+  
+cache:
+  paths:
+    - bower_components/
+    - output/
+  
+install:
+  stage: install
+  script:
+    - bower install
+
+build:
+  stage: build
+  script:
+    - pulp build
+
+test:
+  stage: test
+  script:
+    - bower list --json > resolutions.json
+    - purs publish --manifest bower.json --resolutions resolutions.json --dry-run
+    
+github:
+  stage: github
+  script:
+    - git config push.default matching
+    - git remote add github https://lightandlight:$GITHUB_TOKEN@github.com/lightandlight/$CI_PROJECT_NAME.git
+    - git push github master --tags
+    
+publish:
+  stage: publish
+  only:
+    - tags
+  script:
+    - echo "$GITHUB_TOKEN" | pulp login
+    - git checkout $CI_COMMIT_REF_NAME
+    - yes | pulp publish --no-push
