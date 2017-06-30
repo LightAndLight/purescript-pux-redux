@@ -4,8 +4,8 @@ Types and helper functions for building pux apps that interact with
 an external redux store
 
 This library is intended to ease the adoption of Purescript into existing
-code bases. If you are starting from scratch, there's no good reason to
-use redux. Do your state management with pux instead.
+react+redux code bases. If you are starting from scratch, there's no good reason
+to use redux. Do your state management with pux instead.
 
 ## Usage
 
