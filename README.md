@@ -9,5 +9,5 @@ to use redux. Do your state management with pux instead.
 
 ## Usage
 
-See [here](https://gitlab.com/schalmers/purescript-in-javascript/tree/master/webpack-react-pux#how-to-interact-with-a-redux-store-from-a-pux-component)
-for a usage guide.
+* [Usage guide](https://gitlab.com/schalmers/purescript-in-javascript/tree/master/webpack-react-pux#how-to-interact-with-a-redux-store-from-a-pux-component)
+* [Example project](https://gitlab.com/schalmers/purescript-in-javascript/tree/master/webpack-react-pux/src/routes/Color)
