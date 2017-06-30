@@ -1,6 +1,7 @@
 {
   "name": "purescript-pux-redux",
   "desription": "Types and helper functions for building pux apps that interact with an external redux store",
+  "license": "LicenseRef-LICENSE",
   "authors": [
     "Isaac Elliott <isaace71295@gmail.com>"
   ],
@@ -21,5 +22,9 @@
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0"
-  }
+  },
+  "repository": {                                                           
+    "type": "git",                                                          
+    "url": "git://github.com/lightandlight/purescript-pux-redux.git"             
+  }  
 }
