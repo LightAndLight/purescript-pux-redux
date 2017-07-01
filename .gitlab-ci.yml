@@ -1,5 +1,8 @@
 image: lightandlight/purescript:0.11.5
 
+tags:
+  - purescript
+
 stages:
   - install
   - build
