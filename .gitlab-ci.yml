@@ -1,8 +1,5 @@
 image: lightandlight/purescript:0.11.5
 
-tags:
-  - purescript
-
 stages:
   - install
   - build
@@ -17,22 +14,30 @@ cache:
   
 install:
   stage: install
+  tags:
+    - purescript
   script:
     - bower install
 
 build:
   stage: build
+  tags:
+    - purescript
   script:
     - pulp build
 
 test:
   stage: test
+  tags:
+    - purescript
   script:
     - bower list --json > resolutions.json
     - purs publish --manifest bower.json --resolutions resolutions.json --dry-run
     
 github:
   stage: github
+  tags:
+    - purescript
   script:
     - git config push.default matching
     - git remote add github https://lightandlight:$GITHUB_TOKEN@github.com/lightandlight/$CI_PROJECT_NAME.git
@@ -40,6 +45,8 @@ github:
     
 pursuit:
   stage: publish
+  tags:
+    - purescript
   only:
     - tags
   script:
